@@ -1,0 +1,2 @@
+KaTeX 0.19.1（npm dist 原样拷贝）：katex.min.js / contrib/auto-render.min.js / contrib/mhchem.min.js / fonts(woff2+woff)。
+katex.min.css 已去掉 .ttf 回退地址（只分发 woff2/woff，现代浏览器均优先取 woff2）。

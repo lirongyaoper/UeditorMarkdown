@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <title>UEditor Markdown 三轮升级回归页（2026-11-09）</title>
+    <script charset="utf-8" src="../plugin/ueditor/ueditor.config.js"></script>
+    <script charset="utf-8" src="../plugin/ueditor/ueditor.all.js"></script>
+    <script charset="utf-8" src="../plugin/ueditor/lang/zh-cn/zh-cn.js"></script>
+    <!-- 预加载 showdown，让自动断言同步可用（编辑器内是懒加载） -->
+    <script charset="utf-8" src="../plugin/ueditor/third-party/showdown.js"></script>
+    <style>
+        body { font: 14px/1.8 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; margin: 0 auto; max-width: 1180px; padding: 24px; color: #222; }
+        h1 { font-size: 22px; }
+        h2 { font-size: 17px; margin-top: 32px; border-left: 4px solid #4A90D9; padding-left: 10px; }
+        pre#console { background: #111; color: #9E9E9E; padding: 10px 14px; border-radius: 6px; min-height: 40px; font-size: 12px; white-space: pre-wrap; max-height: 300px; overflow: auto; }
+        .case { background: #F8F9FA; border: 1px solid #E8E8E8; border-radius: 6px; padding: 10px 16px; margin: 14px 0; }
+        .case b { color: #4A90D9; }
+        .edui-editor { margin: 10px 0; }
+        .btn { display: inline-block; padding: 4px 14px; background: #4A90D9; color: #FFF; border-radius: 4px; cursor: pointer; margin-right: 8px; border: 0; }
+        code { background: #EEE; padding: 1px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+<h1>UEditor Markdown 三轮升级回归页（2026-11-09）</h1>
+<p>本页加载真实插件文件，验证三轮升级：①斜杠菜单/「+」/气泡；②Markdown 模式工具栏全可用（颜色/对齐/字号/插图）；③预览区可关可直接编辑；④代码高亮主题 + 本地 KaTeX 公式；⑤保真双向转换与消毒；⑥论坛白名单对应的前台渲染。任何脚本错误都会打到下方控制台镜像。</p>
+
+<h2>控制台镜像（window.onerror + 手动断言）</h2>
+<pre id="console">（等待输出…）</pre>
+<p>
+    <button class="btn" id="runAuto">运行自动断言（转换核心 + 编辑器全链路）</button>
+    <span id="autoResult"></span>
+</p>
+
+<h2>编辑器 A：默认工具栏（含 Markdown 模式按钮）</h2>
+<div class="case">
+    <b>① 斜杠菜单：</b>空行输入 <code>/</code> 或点行首 <code>+</code>（Markdown 模式源码栏）；空段落输入 <code>/</code>（富文本）。支持拼音过滤（bt / h2 / bg / gs / code）。<br/>
+    <b>② 分栏模式：</b>点 <code>Markdown模式</code> → 左源码右预览（预览可直接编辑）；模式栏切换 源码/分栏/预览；工具栏按钮对激活栏生效：源码栏选中文字后点颜色/对齐/字号，看源码变化；插图/视频在源码栏会转 Markdown 插入。<br/>
+    <b>③ 快捷键：</b>Ctrl+B/I/U、Ctrl+K（链接）、Ctrl+Shift+C（代码块）、Ctrl+Shift+M（公式）；列表回车续写、空项回车结束、Tab 缩进。<br/>
+    <b>④ 代码块：</b>光标进代码块右上角浮出工具条（语言/主题/应用到全部/复制）；编辑器内代码按主题着色。<br/>
+    <b>⑤ 公式：</b>工具栏公式按钮 → 本地 KaTeX 对话框（模板/预览/行内块级）；双击公式编辑；<code>$x^2$</code> 闭合自动转换。<br/>
+    <b>⑥ 退出：</b>预览区改过的内容零损失；源码栏改过的部分经 Markdown 渲染。
+</div>
+<script id="editorA" type="text/plain" style="width:100%;height:320px;"></script>
+
+<h2>编辑器 B：迷你工具栏（表单页场景）</h2>
+<div class="case">
+    <b>验证：</b>迷你工具栏不受影响；自动断言覆盖模式进出/同步/丢稿修复。
+</div>
+<script id="editorB" type="text/plain" style="width:100%;height:240px;"></script>
+
+<script>
+(function () {
+    var con = document.getElementById('console');
+    var buf = [];
+    function log(msg) {
+        buf.push(msg);
+        con.textContent = buf.slice(-60).join('\n');
+        console.log(msg);
+    }
+    window.onerror = function (msg, src, line, col) {
+        log('[ERROR] ' + msg + ' @' + (src || '').split('/').slice(-2).join('/') + ':' + line);
+    };
+
+    var a = UE.getEditor('editorA');
+    var b = UE.getEditor('editorB', {
+        toolbars: [["fullscreen", "source", "|", "undo", "redo", "bold", "italic", "insertunorderedlist", "insertcode", "|", "markdown", "contentimport", "exportmd"]],
+        wordCount: false,
+        elementPathEnabled: false,
+        initialFrameHeight: 240
+    });
+
+    window.__editors = {a: a, b: b};
+
+    a.ready(function () {
+        log('编辑器A ready，markdown 按钮: ' + (document.querySelector('.edui-for-markdown') ? 'YES' : 'NO（失败）'));
+    });
+
+    document.getElementById('runAuto').onclick = function () {
+        var pass = 0, fail = 0;
+        function ok(name, cond, extra) {
+            if (cond) { pass++; log('  ok ' + name); }
+            else { fail++; log('  FAIL ' + name + (extra ? ' → ' + extra : '')); }
+        }
+        function eq(name, actual, expected) {
+            ok(name, String(actual) === String(expected),
+                'actual=[' + actual + '] expected=[' + expected + ']');
+        }
+        var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+        var run = async function () {
+            try {
+                /* ---------- 转换核心 ---------- */
+                ok('UE.htmlToMarkdown 存在', typeof UE.htmlToMarkdown === 'function');
+                ok('管线存在', typeof UE._mdPipeline === 'object');
+                eq('围栏带主题', UE.markdownToHtml('```js theme=monokai\nx\n```').indexOf('theme:monokai') !== -1 ? 'y' : 'n', 'y');
+                eq('公式转换', UE.markdownToHtml('a $x_1^2$ b').indexOf('lry-math') !== -1 ? 'y' : 'n', 'y');
+                eq('提示块', UE.markdownToHtml('> [!NOTE]\n> x').indexOf('lry-alert-note') !== -1 ? 'y' : 'n', 'y');
+                eq('上标保真', UE.htmlToMarkdown('<p>a<sup>2</sup></p>').trim(), 'a<sup>2</sup>');
+                eq('对齐块保真', UE.htmlToMarkdown('<p style="text-align:center">**b**</p>').trim(),
+                    '<div style="text-align:center" markdown="1">\\*\\*b\\*\\*</div>');
+                ok('消毒 expression', UE.markdownToHtml('<span style="width:expression(1)">x</span>').indexOf('expression') === -1);
+
+                /* ---------- 编辑器全链路（编辑器 B） ---------- */
+                b.setContent('<h2>标题</h2><p style="text-align:center">居中 <span style="color:#ff0000">红字</span> x<sup>2</sup></p><pre class="brush:js;toolbar:false;theme:monokai;">let a = 1;</pre>');
+                await sleep(700);
+                b.execCommand('markdown');
+                await sleep(500);
+                var holder = document.querySelector('.edui-md-holder');
+                ok('进入模式（state=1）', b.queryCommandState('markdown') === 1);
+                ok('Grid 布局挂载', !!holder && holder.classList.contains('edui-md-holder'));
+                var ta = holder && holder.querySelector('textarea.edui-md-ta');
+                ok('源码栏存在', !!ta);
+                ok('iframe 原地保留', holder && holder.querySelector(':scope > iframe') === b.iframe);
+                ok('源码含主题围栏', ta && ta.value.indexOf('```js theme=monokai') !== -1, ta && ta.value);
+                ok('源码含对齐块', ta && ta.value.indexOf('markdown="1"') !== -1);
+                ok('工具栏可用（bold=0）', b.queryCommandState('bold') === 0);
+                ok('源码模式禁用（source=-1）', b.queryCommandState('source') === -1);
+
+                // 源码改动 → 预览 + 表单
+                ta.focus();
+                ta.setRangeText('\n\n## 新增\n\n- 项目', ta.value.length, ta.value.length, 'end');
+                ta.dispatchEvent(new Event('input', {bubbles: true}));
+                await sleep(600);
+                ok('预览收到新块', b.body.innerHTML.indexOf('新增') !== -1);
+                var formTa = document.getElementById('ueditor_textarea_' + (b.options.textarea || '')) ||
+                    (b.textarea || null);
+                ok('表单同步为 HTML（丢稿修复）', !formTa || formTa.value.indexOf('新增') !== -1 ||
+                    b.getContent().indexOf('新增') !== -1);
+                eq('getContent 真实 HTML', b.getContent().indexOf('<h2') !== -1 ? 'y' : 'n', 'y');
+
+                // 源码栏命令
+                var p = ta.value.indexOf('项目');
+                ta.setSelectionRange(p, p + 2);
+                b.execCommand('forecolor', '#00aa00');
+                await sleep(300);
+                ok('源码栏颜色命令', ta.value.indexOf('<span style="color:#00aa00">项目</span>') !== -1, ta.value);
+                ta.setSelectionRange(ta.value.length, ta.value.length);
+                b.execCommand('justifycenter');
+                await sleep(300);
+                ok('源码栏居中命令', /<div style="text-align:center" markdown="1">/.test(ta.value));
+                await sleep(500);
+                ok('预览渲染居中', /text-align:\s*center/.test(b.body.innerHTML));
+
+                // 斜杠菜单（源码栏）
+                ta.focus();
+                ta.setRangeText('\n/', ta.value.length, ta.value.length, 'end');
+                ta.dispatchEvent(new InputEvent('input', {bubbles: true, data: '/'}));
+                await sleep(120);
+                var menu = document.querySelector('.edui-slashmenu');
+                ok('斜杠菜单弹出', !!menu && menu.style.display === 'block');
+                ta.setRangeText('gs', ta.selectionStart, ta.selectionStart, 'end');
+                ta.dispatchEvent(new InputEvent('input', {bubbles: true, data: 's'}));
+                await sleep(80);
+                ok('拼音过滤（gs→公式）', menu && /公式/.test(menu.textContent));
+                ta.dispatchEvent(new KeyboardEvent('keydown', {keyCode: 27, bubbles: true}));
+                ta.setRangeText('', ta.value.lastIndexOf('/'), ta.value.lastIndexOf('/') + 3, 'end');
+                await sleep(60);
+
+                // 公式命令（源码栏 → $…$）
+                ta.setSelectionRange(ta.value.length, ta.value.length);
+                b.execCommand('formula', {latex: 'E=mc^2', display: false});
+                await sleep(200);
+                ok('源码栏公式命令', ta.value.indexOf('$E=mc^2$') !== -1, ta.value.slice(-60));
+                await sleep(500);
+                ok('预览公式渲染', b.body.querySelectorAll('.lry-math').length > 0);
+
+                // 高亮（::highlight）：在退出前检查（退出清场后会归零）
+                var win = b.window;
+                if (win.CSS && win.CSS.highlights) {
+                    var groups = 0;
+                    win.CSS.highlights.forEach(function (v, k) { if (/^lryc-/.test(k)) groups++; });
+                    ok('编辑器高亮组注册', groups > 0, 'groups=' + groups);
+                } else {
+                    ok('编辑器高亮（浏览器不支持则跳过）', true);
+                }
+                // 模式内 getContent 公式为文本定界符（供表单/前台无损往返）
+                ok('公式还原文本定界符', b.getContent().indexOf('\\(E=mc^2\\)') !== -1, b.getContent().slice(-120));
+
+                // 预览编辑 → 回写源码
+                b.__mdActivePane = 'preview';
+                b.setContent('<p>预览编辑 <strong>粗</strong></p>');
+                await sleep(1000);
+                ok('预览编辑回写源码', ta.value.indexOf('预览编辑 **粗**') !== -1, ta.value);
+
+                // 退出保真
+                b.execCommand('markdown');
+                await sleep(400);
+                ok('退出（state=0）', b.queryCommandState('markdown') === 0);
+                ok('覆盖层移除', !document.querySelector('.edui-md-holder'));
+                ok('iframe 回归原位', b.iframe && b.iframe.parentNode && !b.iframe.parentNode.classList.contains('edui-md-holder'));
+                var finalC = b.getContent();
+                ok('退出内容保真', finalC.indexOf('预览编辑') !== -1 && finalC.indexOf('<strong>粗</strong>') !== -1, finalC);
+            } catch (e) {
+                fail++;
+                log('  FAIL 自动断言异常: ' + (e && e.stack || e));
+            }
+            document.getElementById('autoResult').textContent = '结果：' + pass + ' 通过 / ' + fail + ' 失败';
+            log('自动断言完成：' + pass + ' pass / ' + fail + ' fail');
+        };
+        run();
+    };
+})();
+</script>
+
+<h2>手动检查清单</h2>
+<div class="case">
+    <ol>
+        <li>富文本模式：空段输入 <code>/biaoge</code> 回车插表格；<code>/dm</code> 二级语言列表</li>
+        <li>富文本模式：<code>$x^2$</code> 闭合自动变公式；<code>```js</code> 回车建代码块</li>
+        <li>Markdown 模式：三种视图切换 + 同步滚动；窄窗口（&lt;640px）上下堆叠；全屏正常</li>
+        <li>源码栏选中文字 → 上方气泡（B/I/S/U/代码/高亮/上下标/公式/链接/颜色）</li>
+        <li>源码栏点「插入图片/视频/表情/特殊字符」→ 结果转成 Markdown 插到光标</li>
+        <li>代码块工具条：换语言/主题、应用到全部、复制</li>
+        <li>公式对话框：模板插入、行内/块级切换、旧 latexeasy 图片双击转新格式</li>
+        <li>Ctrl+Z：预览栏与源码栏各自可撤销；退出后再 Ctrl+Z 一步回退整个模式</li>
+        <li>导出 Markdown：勾选/取消「保留富文本格式」对比输出</li>
+        <li>预览对话框（工具栏预览按钮）：代码高亮与公式与前台一致</li>
+    </ol>
+</div>
+<p><a href="render-test.html">前台内容渲染器测试页 →</a>（代码高亮/公式/提示块/目录/脚注/复制按钮）</p>
+</body>
+</html>

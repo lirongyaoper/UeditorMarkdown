@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>回归：form 内编辑器进入 Markdown 模式不卡死</title>
+<!-- 触发条件：编辑器必须位于 <form> 内（sync() 才会执行 setValue）。
+     历史 bug：进入 Markdown 模式约 400ms 后 flushLatest ⇄ orgSync/setValue ⇄ 包装版
+     getContent 互递归，主线程永久阻塞。此页复现该场景，配合 browser-run.js 断言。 -->
+<script type="text/javascript" charset="utf-8" src="../plugin/ueditor/ueditor.config.js"></script>
+<script type="text/javascript" charset="utf-8" src="../plugin/ueditor/ueditor.all.js"></script>
+<script type="text/javascript" charset="utf-8" src="../plugin/ueditor/lang/zh-cn/zh-cn.js"></script>
+</head>
+<body>
+<form onsubmit="return false" method="post">
+	<textarea name="content" id="content" style="width:96%;height:320px"></textarea>
+	<script type="text/javascript">
+		var ue = UE.getEditor("content", { wordCount: false, elementPathEnabled: false, initialFrameHeight: 320 });
+	</script>
+</form>
+</body>
+</html>

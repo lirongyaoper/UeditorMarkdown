@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>前台内容渲染器测试页</title>
+<script>window.LryContentRenderOptions = { defaultTheme: 'github-dark' };</script>
+<link href="../css/lry-content-render.css" rel="stylesheet">
+<style>
+body { font: 15px/1.8 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; max-width: 860px; margin: 24px auto; padding: 0 16px; color: #24292f; }
+h2 { border-left: 4px solid #0d9488; padding-left: 10px; }
+</style>
+</head>
+<body>
+<h1>渲染器测试内容</h1>
+<div class="news_con" id="c1">
+    <h2 id="a">标题 A</h2>
+    <p>行内公式 <span class="lry-math">\(x_1^2 + y^2 = z\)</span> 与文本。</p>
+    <p class="lry-math lry-math-block">\[E = mc^2\]</p>
+    <p>裸定界符：质能方程 \(E=mc^2\) 在文末。金额 $5 和 $6 不应转公式。</p>
+    <pre class="brush:js;toolbar:false;theme:monokai;">function hello() {
+  const s = "world"; // 注释
+  return s.length > 0;
+}</pre>
+    <pre class="brush:python;toolbar:false;">def f(x):
+    return x ** 2</pre>
+    <blockquote class="lry-alert lry-alert-warning"><p>这是一个警告提示块。</p></blockquote>
+    <p class="lry-toc">[TOC]</p>
+    <p>脚注引用<sup class="lry-fn">1</sup>和另一个<sup class="lry-fn">note</sup>。</p>
+    <div class="lry-footnotes">
+        <p class="lry-fn-def"><sup class="lry-fn-label">1</sup>第一条脚注。</p>
+        <p class="lry-fn-def"><sup class="lry-fn-label">note</sup>带标签的脚注。</p>
+    </div>
+    <p>行内 <code>code</code>、<mark>高亮</mark>、<kbd>Ctrl</kbd>+<kbd>C</kbd>、化学式 <span class="lry-math">\(\ce{H2O}\)</span></p>
+</div>
+<script src="../js/lry-content-render.js"></script>
+<script>LryContentRender.render(document.getElementById('c1'));</script>
+</body>
+</html>

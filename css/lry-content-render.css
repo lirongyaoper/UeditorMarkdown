@@ -1,0 +1,256 @@
+/* lry-content-render.css — 前台内容渲染样式（2026-11-09 UEditor Markdown 三轮升级）
+ * 配套 common/static/js/lry-content-render.js：代码块（头部/复制/主题）、公式、
+ * 提示块、脚注、目录、高亮 mark、kbd、任务列表。
+ * 主题调色由 JS 注入（LryCodeThemes.css），这里只管结构与观感。 */
+
+/* ---------- 代码块容器 ---------- */
+.lry-code {
+    position: relative;
+    margin: 14px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(127, 127, 127, .2);
+}
+
+.lry-code-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    font-size: 12px;
+    background: rgba(127, 127, 127, .08);
+    user-select: none;
+}
+
+.lry-code-dark .lry-code-head {
+    background: rgba(255, 255, 255, .06);
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+.lry-code:not(.lry-code-dark) .lry-code-head {
+    border-bottom: 1px solid rgba(127, 127, 127, .15);
+}
+
+.lry-code-lang {
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    letter-spacing: .3px;
+    opacity: .75;
+}
+
+.lry-code-copy {
+    border: 1px solid rgba(127, 127, 127, .3);
+    background: transparent;
+    color: inherit;
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 2px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: .85;
+}
+
+.lry-code-copy:hover {
+    opacity: 1;
+}
+
+.lry-code-copy.copied {
+    background: #10b981;
+    border-color: #10b981;
+    color: #fff;
+    opacity: 1;
+}
+
+.lry-code pre.lry-code-hl {
+    margin: 0;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    white-space: pre;
+    tab-size: 4;
+}
+
+.lry-code pre.lry-code-hl code {
+    font-family: inherit;
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+/* 行内 code 由主题各自的全局规则负责，这里仅兜底 */
+.lry-content-render-scope code {
+    font-family: Consolas, Monaco, "Courier New", monospace;
+}
+
+/* ---------- 公式 ---------- */
+.lry-math {
+    padding: 0 2px;
+}
+
+p.lry-math.lry-math-block,
+div.lry-math.lry-math-block {
+    display: block;
+    text-align: center;
+    margin: 12px auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 0;
+}
+
+.katex {
+    font-size: 1.05em;
+}
+
+/* ---------- 提示块 ---------- */
+blockquote.lry-alert {
+    position: relative;
+    padding: 26px 14px 6px;
+    margin: 14px 0;
+    border-left: 4px solid #ccc;
+    border-radius: 0 6px 6px 0;
+}
+
+blockquote.lry-alert::before {
+    position: absolute;
+    left: 14px;
+    top: 4px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+blockquote.lry-alert-note { border-left-color: #0969DA; background: #F1F8FF; }
+blockquote.lry-alert-note::before { content: "\2139\FE0F  提示"; color: #0969DA; }
+blockquote.lry-alert-tip { border-left-color: #1A7F37; background: #F0FFF4; }
+blockquote.lry-alert-tip::before { content: "\1F4A1  技巧"; color: #1A7F37; }
+blockquote.lry-alert-important { border-left-color: #8250DF; background: #F8F4FF; }
+blockquote.lry-alert-important::before { content: "\2757  重要"; color: #8250DF; }
+blockquote.lry-alert-warning { border-left-color: #9A6700; background: #FFF8E5; }
+blockquote.lry-alert-warning::before { content: "\26A0\FE0F  警告"; color: #9A6700; }
+blockquote.lry-alert-caution { border-left-color: #CF222E; background: #FFF5F5; }
+blockquote.lry-alert-caution::before { content: "\26D4  注意"; color: #CF222E; }
+
+blockquote.lry-alert p {
+    margin: 0 0 .6em;
+}
+
+/* ---------- 目录 ---------- */
+.lry-toc-box {
+    margin: 16px 0;
+    padding: 12px 16px;
+    border: 1px solid rgba(127, 127, 127, .25);
+    border-radius: 8px;
+    background: rgba(127, 127, 127, .05);
+}
+
+.lry-toc-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.lry-toc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+a.lry-toc-item {
+    text-decoration: none;
+    color: inherit;
+    font-size: 14px;
+    line-height: 1.8;
+    opacity: .85;
+}
+
+a.lry-toc-item:hover {
+    opacity: 1;
+}
+
+a.lry-toc-item.lry-toc-l1 { font-weight: 600; }
+a.lry-toc-item.lry-toc-l2 { padding-left: 1.2em; }
+a.lry-toc-item.lry-toc-l3 { padding-left: 2.4em; }
+a.lry-toc-item.lry-toc-l4 { padding-left: 3.6em; }
+a.lry-toc-item.lry-toc-l5 { padding-left: 4.8em; }
+a.lry-toc-item.lry-toc-l6 { padding-left: 6em; }
+
+.lry-toc-empty {
+    color: #999;
+    font-size: 13px;
+}
+
+/* ---------- 脚注 ---------- */
+sup.lry-fn .lry-fn-link,
+a.lry-fn-link {
+    color: #0969da;
+    text-decoration: none;
+    font-size: .78em;
+}
+
+div.lry-footnotes {
+    margin-top: 1.6em;
+    padding-top: .8em;
+    border-top: 1px solid rgba(127, 127, 127, .25);
+    font-size: 13px;
+    opacity: .92;
+}
+
+div.lry-footnotes p.lry-fn-def {
+    margin: .25em 0;
+}
+
+sup.lry-fn-label {
+    color: #0969da;
+    margin-right: 4px;
+}
+
+/* ---------- 行内高亮 / 按键 ---------- */
+mark {
+    background: #fff3a3;
+    color: inherit;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+kbd {
+    display: inline-block;
+    padding: 0 5px;
+    font: 12px/1.6 Consolas, Monaco, monospace;
+    color: #24292f;
+    background: #f6f8fa;
+    border: 1px solid #d0d7de;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    margin: 0 1px;
+}
+
+/* ---------- 表格（与编辑器 iframe 默认表格样式一致，仅作用于渲染内容容器） ----------
+   :where() 压低优先级：宿主主题自有表格规则（如 .news_con table）可覆盖 */
+.lry-rendered :where(table) {
+    display: table;
+    border-collapse: collapse;
+    margin: 10px 0;
+    max-width: 100%;
+}
+
+.lry-rendered :where(td, th) {
+    padding: 5px 10px;
+    border: 1px solid #DDD;
+}
+
+.lry-rendered :where(th) {
+    border-top: 1px solid #BBB;
+    background-color: #F7F7F7;
+}
+
+.lry-rendered :where(caption) {
+    border: 1px dashed #DDD;
+    border-bottom: 0;
+    padding: 3px;
+    text-align: center;
+}
+
+.lry-rendered :where(td p) {
+    margin: 0;
+    padding: 0;
+}

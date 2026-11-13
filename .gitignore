@@ -1,0 +1,10 @@
+# 开源发布审核报告（含线上 PoC 与本机绝对路径，不随包发布）
+UeditorMarkdown 开源发布审核报告.md
+
+# 依赖与本地构建产物
+node_modules/
+
+# 系统/编辑器杂项
+.DS_Store
+Thumbs.db
+*.log
