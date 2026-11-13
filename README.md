@@ -16,12 +16,17 @@ This distribution packages the editor together with the shared libraries it need
 - **Full toolbar formatting in Markdown mode** — color, background, font, size, alignment, indent, etc. apply to the active pane; in the source pane they emit Markdown marks or safe inline HTML (`<span style>`, `<div style markdown="1">`).
 - **Selection bubble**, keyboard shortcuts (`Ctrl+B/I/U/K`, `Ctrl+Shift+C` code, `Ctrl+Shift+M` math), list/quote auto-continuation, `Tab` indent.
 
+### Yuque highlights (new in 2026-11)
+- **Highlight blocks `:::info / :::success / :::warning / :::danger`** (Yuque syntax): colored cards (info blue / success green / warning yellow / danger red, with icon labels). GitHub type aliases (`note/tip/important/caution`) and Chinese aliases are accepted. Insert via slash menu `/glk`; round-trips losslessly in both modes.
+- **Colored inline highlight**: toolbar "highlight" button (highlighter icon) opens the Yuque palette (default yellow / red / orange / green / blue / purple / cyan + clear). Main click applies default yellow; clicking again with the same color toggles it off (Yuque behavior); changing color never nests marks.
+- **Clean `==highlight==` round-trip**: uncolored marks export as `==…==`; colored marks are preserved as `<mark style="background-color:…">` inline HTML without losing the color.
+
 ### Code & Math
 - **Code highlighting** via highlight.js 11 (58 languages) with **10 themes**: `github`, `github-dark`, `one-light`, `one-dark`, `monokai`, `dracula`, `nord`, `tokyo-night`, `vscode-dark-plus`, `solarized-light`. Floating code toolbar (language / theme / apply-to-all / copy). Fenced blocks support ```` ```js theme=monokai ````. In-editor coloring uses the CSS Custom Highlight API (no DOM mutation).
 - **Local KaTeX math** (no external image service). Supports `$…$`, `$$…$$`, `\(…\)`, `\[…\]`, and ```` ```math ````. Rewritten formula dialog with live preview, inline/block toggle, and a template panel (fractions, radicals, sums, integrals, matrices, Greek, arrows, chemistry via `mhchem`). Double-click a formula to edit. Stored as text delimiters so it survives aggressive server-side filters.
 
 ### Markdown extensions
-`==highlight==`, GitHub-style alert blocks (`> [!NOTE] / [TIP] / [IMPORTANT] / [WARNING] / [CAUTION]`), footnotes `[^1]`, `[TOC]`, emoji shortcodes, task lists — all round-trip losslessly.
+`==highlight==`, Yuque highlight blocks (`:::info / success / warning / danger`), GitHub-style alert blocks (`> [!NOTE] / [TIP] / [IMPORTANT] / [WARNING] / [CAUTION]`), footnotes `[^1]`, `[TOC]`, emoji shortcodes, task lists — all round-trip losslessly.
 
 ### Fidelity & safety
 - **Fidelity bidirectional conversion** (`UE.htmlToMarkdown` / `UE.markdownToHtml`): styles, alignment blocks, media, merged-cell tables preserved as inline HTML; `richFormat: false` for pure Markdown.
@@ -91,7 +96,7 @@ php -S localhost:8000 -t .
 # open http://localhost:8000/examples/index.html
 ```
 
-`examples/index.html` is the editor regression page (click **运行自动断言** for 33 assertions). `examples/render-test.html` and `examples/forum-pipe-test.html` demonstrate the front-end renderer.
+`examples/index.html` is the editor regression page (click **运行自动断言** for 51 assertions). `examples/render-test.html` and `examples/forum-pipe-test.html` demonstrate the front-end renderer.
 
 > Without PHP the editor still works fully for editing; only server-side upload/listing needs a backend (see below).
 
@@ -170,14 +175,14 @@ Use it when storing editor HTML server-side (e.g. forum posts) as defense-in-dep
 ## Testing
 
 ```bash
-# Conversion core (loads the real ueditor.all.js in jsdom): 217 assertions
+# Conversion core (loads the real ueditor.all.js in jsdom): 241 assertions
 npm install jsdom
 node test/run-tests.js
 
 # Server-side sanitizer: 51 assertions (legacy byte-compat + rich mode + XSS vectors)
 php test/php-xss-test.php
 
-# Browser regression: serve the package, open examples/index.html, click "运行自动断言" (33 assertions)
+# Browser regression: serve the package, open examples/index.html, click "运行自动断言" (51 assertions)
 php -S localhost:8000 -t .
 ```
 

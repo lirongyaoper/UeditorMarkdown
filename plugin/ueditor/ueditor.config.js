@@ -88,6 +88,7 @@
                 "|",
                 "forecolor",    // 字体颜色
                 "backcolor",    // 背景色
+                "lrymark",      // 语雀式高亮（色板：默认黄/红/橙/绿/蓝/紫/青 + 清除）
                 "insertorderedlist",   // 有序列表
                 "insertunorderedlist", // 无序列表
                 "selectall",    // 全选
@@ -519,6 +520,7 @@
             "fontborder",      // 字符边框
             "forecolor",       // 字体颜色
             "backcolor",       // 背景色
+            "lrymark",         // 语雀式高亮
             "imagenone",       // 图片默认
             "imageleft",       // 图片左浮动
             "imagecenter",     // 图片居中

@@ -224,7 +224,7 @@ eq("上标", h2m("<p>a<sup>2</sup></p>").trim(), "a<sup>2</sup>");
 eq("下标", h2m("<p>a<sub>2</sub></p>").trim(), "a<sub>2</sub>");
 eq("下划线", h2m("<p><u>x</u></p>").trim(), "<u>x</u>");
 eq("kbd", h2m("<p><kbd>Ctrl</kbd></p>").trim(), "<kbd>Ctrl</kbd>");
-eq("mark", h2m("<p><mark>x</mark></p>").trim(), "<mark>x</mark>");
+eq("mark（语雀 == 标记导出）", h2m("<p><mark>x</mark></p>").trim(), "==x==");
 eq("字框（border span）", h2m('<p><span style="border:solid windowtext 1px">x</span></p>').trim()
     .indexOf('style="border:solid windowtext 1px"') !== -1 ? "y" : "n", "y");
 eq("font 标签转 span", h2m('<p><font color="red" face="SimSun">x</font></p>').trim(),
@@ -259,7 +259,13 @@ eq("块级公式导出", h2m('<p class="lry-math lry-math-block">\\[E=mc^2\\]</p
 eq("公式 & 实体往返无损", h2m('<p class="lry-math lry-math-block">\\[a&amp;=b\\]</p>').trim(), "$$\na&=b\n$$");
 eq("脚注导出", norm(h2m('<p>文<sup class="lry-fn">a</sup>。</p><div class="lry-footnotes"><p class="lry-fn-def"><sup class="lry-fn-label">a</sup> 注</p></div>')),
     "文[^a]。 [^a]: 注");
-eq("mark 导出", h2m("<p>a <mark>b</mark></p>").trim(), "a <mark>b</mark>");
+eq("mark 导出（== 标记）", h2m("<p>a <mark>b</mark></p>").trim(), "a ==b==");
+eq("彩色 mark 导出（保真内联 HTML）", h2m('<p>a <mark style="background-color:#FFD6D6">b</mark></p>').trim(),
+    'a <mark style="background-color:#FFD6D6">b</mark>');
+eq("彩色 mark 纯净模式降级 ==", h2m('<p>a <mark style="background-color:#FFD6D6">b</mark></p>', { richFormat: false }).trim(),
+    "a ==b==");
+eq("mark 边缘含 = 回退 HTML", h2m("<p><mark>=x=</mark></p>").trim(), "<mark>=x=</mark>");
+eq("mark 跨行回退 HTML", h2m("<p><mark>a<br/>b</mark></p>").trim().indexOf("<mark>") === 0 ? "y" : "n", "y");
 
 section("h2m 纯净模式（richFormat:false）");
 eq("span 样式丢弃", h2m('<p><span style="color:red">r</span></p>', { richFormat: false }).trim(), "r");
@@ -304,7 +310,38 @@ eq("公式往返（块级）", round("$$\nE=mc^2\n$$"), "$$\nE=mc^2\n$$");
 eq("公式往返（\\(\\)）", round("a \\(\\frac12\\) b"), "a $\\frac12$ b");
 eq("提示块往返", round("> [!IMPORTANT]\n> **x**"), "> [!IMPORTANT]\n> **x**");
 eq("TOC 往返", round("[TOC]"), "[TOC]");
-eq("高亮往返", round("a ==b== c"), "a <mark>b</mark> c");
+eq("高亮往返（== 标记）", round("a ==b== c"), "a ==b== c");
+eq("彩色高亮往返", round('a <mark style="background-color:#CCE3FF">b</mark> c'),
+    'a <mark style="background-color:#CCE3FF">b</mark> c');
+
+/* ================= 语雀高亮块（::: 容器，2026-11） ================= */
+section("语雀高亮块 :::");
+eq(":::info 转换", norm(m2h(":::info\n内容\n:::")),
+    '<blockquote class="lry-card lry-card-info"><p>内容</p></blockquote>');
+eq(":::success 转换", m2h(":::success\n好\n:::").indexOf("lry-card-success") !== -1 ? "y" : "n", "y");
+eq(":::warning 转换", m2h(":::warning\nw\n:::").indexOf("lry-card-warning") !== -1 ? "y" : "n", "y");
+eq(":::danger 转换", m2h(":::danger\nd\n:::").indexOf("lry-card-danger") !== -1 ? "y" : "n", "y");
+eq("类型大小写与中文别名", m2h(":::DANGER\nx\n:::").indexOf("lry-card-danger") !== -1 &&
+    m2h(":::危险\nx\n:::").indexOf("lry-card-danger") !== -1 ? "y" : "n", "y");
+eq("GitHub 类型别名映射", m2h(":::note\nx\n:::").indexOf("lry-card-info") !== -1 &&
+    m2h(":::tip\nx\n:::").indexOf("lry-card-success") !== -1 ? "y" : "n", "y");
+eq("无类型 ::: 默认 info", m2h(":::\nx\n:::").indexOf("lry-card-info") !== -1 ? "y" : "n", "y");
+eq("未知类型不吞原文", m2h(":::foo\nx\n:::").indexOf("lry-card") === -1 &&
+    m2h(":::foo\nx\n:::").indexOf("foo") !== -1 ? "y" : "n", "y");
+eqT("卡片内嵌套列表与加粗", m2h(":::info\n- **a**\n- b\n:::"),
+    '<blockquote class="lry-card lry-card-info"><ul><li><strong>a</strong></li><li>b</li></ul></blockquote>');
+eq("卡片内围栏代码", m2h(":::warning\n```js\nlet x=1\n```\n:::").indexOf("brush:js") !== -1 ? "y" : "n", "y");
+eq("卡片嵌套卡片", m2h(":::info\na\n:::danger\nb\n:::\n:::").indexOf("lry-card-danger") !== -1 ? "y" : "n", "y");
+eq("未闭合容器到文末", m2h(":::info\nx").indexOf("lry-card-info") !== -1 ? "y" : "n", "y");
+eq("卡片在列表内不散架", m2h("- 项\n\n  :::info\n  x\n  :::\n\n- 后").indexOf("lry-card-info") !== -1 ? "y" : "n", "y");
+eq("卡片导出", h2m('<blockquote class="lry-card lry-card-warning"><p>小心</p></blockquote>').trim(),
+    ":::warning\n小心\n:::");
+eq("卡片导出含多段", h2m('<blockquote class="lry-card lry-card-info"><p>a</p><p>b</p></blockquote>').trim(),
+    ":::info\na\n\nb\n:::");
+eq("卡片往返", round(":::warning\n**小心** 火\n:::"), ":::warning\n**小心** 火\n:::");
+eq("卡片+高亮混合往返", round(":::info\n==重点==\n:::"), ":::info\n==重点==\n:::");
+eq("提示块不受 ::: 影响", m2h("> [!NOTE]\n> x").indexOf("lry-alert-note") !== -1 ? "y" : "n", "y");
+eq("needsEscaping 识别 :::", UE.markdownNeedsEscaping(":::info\nx\n:::") ? "y" : "n", "y");
 eq("脚注往返", norm(round("文[^a]。\n\n[^a]: 注 **释**")), "文[^a]。 [^a]: 注 **释**");
 eq("span 往返", round("a <span style=\"color:red\">r</span> b"), 'a <span style="color:red">r</span> b');
 eq("上标往返", round("a<sup>2</sup>"), "a<sup>2</sup>");

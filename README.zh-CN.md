@@ -1,6 +1,6 @@
 # UEditor Markdown 增强版
 
-**基于 [UEditor](https://github.com/fex-team/ueditor) 4.5.0 的增强发行版：语雀式 Markdown 编辑、代码块语法高亮（10 套主题）、本地 KaTeX 公式，以及独立的前台内容渲染器。**
+**基于 [UEditor](https://github.com/fex-team/ueditor) 4.5.0 的增强发行版：语雀式 Markdown 编辑、语雀高亮块与彩色高亮、代码块语法高亮（10 套主题）、本地 KaTeX 公式，以及独立的前台内容渲染器。**
 
 本发行版把编辑器、它依赖的公共库、前台渲染器打包在一起，可直接放进任意项目使用，无需任何框架。所有新功能都在浏览器端运行；另附一份通用、无框架依赖的 PHP 上传后端，开箱即用。
 
@@ -11,24 +11,29 @@
 ## 功能一览
 
 ### 编辑
-- **语雀式斜杠菜单**：空行输入 `/` 或点行首 `+` 弹出标签菜单（标题、列表、表格、代码、公式、提示块、目录、行内标记、媒体等），支持中文 / 英文 / 拼音首字母过滤（`bt`、`h2`、`bg`、`gs`、`code`）。富文本与 Markdown 模式都生效，`slashMenu: false` 可关闭。
+- **语雀式斜杠菜单**：空行输入 `/` 或点行首 `+` 弹出标签菜单（标题、列表、表格、代码、公式、提示块、**高亮块**、目录、行内标记、媒体等），支持中文 / 英文 / 拼音首字母过滤（`bt`、`h2`、`bg`、`gs`、`glk`、`code`）。富文本与 Markdown 模式都生效，`slashMenu: false` 可关闭。
 - **真正的 Markdown 模式**：源码 / 分栏 / 预览三态切换。预览栏**就是编辑器本身的 iframe**（绝不移动/重载），两侧都能直接编辑；防抖双向同步、两栏各自独立撤销、**退出零失真**。修复了「Markdown 模式下直接提交会丢稿」的老 bug。
 - **Markdown 模式下工具栏格式全可用**：颜色、背景、字体、字号、对齐、缩进等作用于当前激活栏；源码栏会输出 Markdown 标记或安全内联 HTML（`<span style>`、`<div style markdown="1">`）。
 - **选区气泡**、快捷键（`Ctrl+B/I/U/K`、`Ctrl+Shift+C` 代码、`Ctrl+Shift+M` 公式）、列表/引用回车续写、`Tab` 缩进。
+
+### 语雀高亮（2026-11 新增）
+- **高亮块 `:::info / :::success / :::warning / :::danger`**（语雀语法）：彩色卡片形态（信息蓝 / 成功绿 / 警示黄 / 危险红，带图标标签），亦认 GitHub 类型别名（`note/tip/important/caution`）与中文别名（信息/成功/警告/危险/提示/技巧/重要/注意）。斜杠菜单 `/glk` 快速插入，富文本与源码栏都支持，双向往返无损。
+- **行内彩色高亮**：工具栏「高亮」按钮（荧光笔图标）弹出语雀色板（默认黄 / 红 / 橙 / 绿 / 蓝 / 紫 / 青 + 清除）；主按钮一键套默认黄，同色再点取消（语雀式切换），换色不嵌套。
+- **`==高亮==` 干净往返**：无色高亮导出为 `==…==` 标记；彩色高亮保真为 `<mark style="background-color:…">` 内联 HTML，往返不丢色。
 
 ### 代码与公式
 - **代码高亮**：highlight.js 11（58 种语言），**10 套主题**：`github`、`github-dark`、`one-light`、`one-dark`、`monokai`、`dracula`、`nord`、`tokyo-night`、`vscode-dark-plus`、`solarized-light`。代码块浮动工具条（语言 / 主题 / 应用到全部 / 复制）；围栏支持 ```` ```js theme=monokai ````。编辑器内着色用 CSS Custom Highlight API，不改 DOM。
 - **本地 KaTeX 公式**（不依赖外网图片服务）：支持 `$…$`、`$$…$$`、`\(…\)`、`\[…\]`、```` ```math ````。重写的公式对话框带实时预览、行内/块级切换、模板面板（分式、根式、求和、积分、矩阵、希腊字母、箭头、`mhchem` 化学式）。双击公式即可编辑。公式以文本定界符存储，即便服务端过滤剥掉 class 也能在前台渲染。
 
 ### Markdown 扩展
-`==高亮==`、GitHub 提示块（`> [!NOTE] / [TIP] / [IMPORTANT] / [WARNING] / [CAUTION]`）、脚注 `[^1]`、`[TOC]`、emoji 短码、任务列表——双向往返都不丢失。
+`==高亮==`、语雀高亮块（`:::info / success / warning / danger`）、GitHub 提示块（`> [!NOTE] / [TIP] / [IMPORTANT] / [WARNING] / [CAUTION]`）、脚注 `[^1]`、`[TOC]`、emoji 短码、任务列表——双向往返都不丢失。
 
 ### 保真与安全
 - **保真双向转换**（`UE.htmlToMarkdown` / `UE.markdownToHtml`）：样式、对齐块、媒体、合并单元格表格保留为内联 HTML；`richFormat: false` 可退纯净 Markdown。
 - **CSS 白名单消毒**（`UE.sanitizeCssStyle`、`UE.markdownSanitizeHtml`）：拦截 `expression`、`url(javascript:)`、`@import`、反斜杠转义等。
 
 ### 前台内容渲染器
-`LryContentRender` 可在**任意页面**（文章、论坛、评论）渲染已保存的编辑器 HTML：代码高亮 + 主题 + 复制按钮、KaTeX（含裸文本定界符扫描）、提示块/脚注/目录样式。按需懒加载 highlight.js 与 KaTeX。
+`LryContentRender` 可在**任意页面**（文章、论坛、评论）渲染已保存的编辑器 HTML：代码高亮 + 主题 + 复制按钮、KaTeX（含裸文本定界符扫描）、提示块/高亮块卡片/彩色 mark/脚注/目录样式。按需懒加载 highlight.js 与 KaTeX。
 
 ---
 
@@ -91,7 +96,7 @@ php -S localhost:8000 -t .
 # 打开 http://localhost:8000/examples/index.html
 ```
 
-`examples/index.html` 是编辑器回归页（点 **运行自动断言** 跑 33 条断言）；`examples/render-test.html`、`examples/forum-pipe-test.html` 演示前台渲染器。
+`examples/index.html` 是编辑器回归页（点 **运行自动断言** 跑 51 条断言）；`examples/render-test.html`、`examples/forum-pipe-test.html` 演示前台渲染器。
 
 > 不用 PHP 编辑器也能完整编辑；只有服务端上传/列表需要后端（见下文）。
 
@@ -170,14 +175,14 @@ $safe = remove_xss($html, true);  // rich 模式：保留校验过的 style、br
 ## 测试
 
 ```bash
-# 转换核心（jsdom 加载真实 ueditor.all.js）：217 条断言
+# 转换核心（jsdom 加载真实 ueditor.all.js）：241 条断言
 npm install jsdom
 node test/run-tests.js
 
 # 服务端消毒：51 条断言（旧版逐字节兼容 + rich 模式 + XSS 向量）
 php test/php-xss-test.php
 
-# 浏览器回归：伺服本包，打开 examples/index.html，点「运行自动断言」（33 条断言）
+# 浏览器回归：伺服本包，打开 examples/index.html，点「运行自动断言」（51 条断言）
 php -S localhost:8000 -t .
 ```
 

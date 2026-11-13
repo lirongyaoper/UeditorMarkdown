@@ -48,6 +48,12 @@
 </div>
 <script id="editorB" type="text/plain" style="width:100%;height:240px;"></script>
 
+<h2>编辑器 C：语雀高亮（自动断言临时创建）</h2>
+<div class="case">
+    <b>验证：</b>工具栏 <code>高亮</code> 按钮（荧光笔图标）→ 弹出语雀色板（默认黄/红/橙/绿/蓝/紫/青 + 清除）；选中文字后点主按钮套默认黄，同色再点取消；斜杠菜单 <code>/glk</code> 插入 <code>:::</code> 高亮块（信息/成功/警示/危险四色卡片）。
+</div>
+<script id="editorC" type="text/plain" style="width:100%;height:200px;"></script>
+
 <script>
 (function () {
     var con = document.getElementById('console');
@@ -98,6 +104,67 @@
                 eq('对齐块保真', UE.htmlToMarkdown('<p style="text-align:center">**b**</p>').trim(),
                     '<div style="text-align:center" markdown="1">\\*\\*b\\*\\*</div>');
                 ok('消毒 expression', UE.markdownToHtml('<span style="width:expression(1)">x</span>').indexOf('expression') === -1);
+
+                /* ---------- 语雀高亮块 + 高亮色板（2026-11） ---------- */
+                eq(':::info 卡片', UE.markdownToHtml(':::info\n内容\n:::').indexOf('lry-card lry-card-info') !== -1 ? 'y' : 'n', 'y');
+                eq(':::danger 卡片', UE.markdownToHtml(':::danger\nd\n:::').indexOf('lry-card-danger') !== -1 ? 'y' : 'n', 'y');
+                eq('卡片导出', UE.htmlToMarkdown('<blockquote class="lry-card lry-card-warning"><p>小心</p></blockquote>').trim(), ':::warning\n小心\n:::');
+                eq('无色高亮导出 ==', UE.htmlToMarkdown('<p>a <mark>b</mark></p>').trim(), 'a ==b==');
+                eq('彩色高亮导出', UE.htmlToMarkdown('<p>a <mark style="background-color:#FFD6D6">b</mark></p>').trim(),
+                    'a <mark style="background-color:#FFD6D6">b</mark>');
+                ok('彩色高亮往返', UE.htmlToMarkdown(UE.markdownToHtml('a <mark style="background-color:#CCE3FF">b</mark> c')).trim()
+                    === 'a <mark style="background-color:#CCE3FF">b</mark> c');
+                ok('卡片往返', UE.htmlToMarkdown(UE.markdownToHtml(':::warning\n**小心**\n:::')).trim() === ':::warning\n**小心**\n:::');
+
+                /* ---------- lrymark 富文本命令 ---------- */
+                var c = UE.getEditor('editorC', { toolbars: [["bold", "lrymark"]], wordCount: false, elementPathEnabled: false });
+                await new Promise(function (r) { c.ready(r); });
+                function cTextNode() { return c.body.querySelector('p').firstChild; }
+                c.setContent('<p>语雀高亮测试段落</p>');
+                await sleep(100);
+                var rng = c.selection.getRange();
+                rng.setStart(cTextNode(), 0).setEnd(cTextNode(), 4).select();
+                c.execCommand('lrymark', '');
+                ok('lrymark 默认黄（无 style mark）', c.body.querySelectorAll('mark').length === 1 &&
+                    c.body.querySelector('mark').getAttribute('style') === null, c.body.innerHTML);
+                // 同色再点 = 取消（语雀式切换）
+                rng = c.selection.getRange();
+                rng.selectNodeContents(c.body.querySelector('mark')).select();
+                c.execCommand('lrymark', '');
+                ok('lrymark 同色切换取消', c.body.querySelectorAll('mark').length === 0, c.body.innerHTML);
+                // 套色
+                rng = c.selection.getRange();
+                rng.setStart(cTextNode(), 0).setEnd(cTextNode(), 4).select();
+                c.execCommand('lrymark', '#FFD6D6');
+                var mk = c.body.querySelector('mark');
+                ok('lrymark 套色', mk && /background-color:\s*(?:#ffd6d6|rgb\(255,\s*214,\s*214\))/i.test(mk.getAttribute('style') || ''), c.body.innerHTML);
+                // 换色不嵌套
+                rng = c.selection.getRange();
+                rng.selectNodeContents(mk).select();
+                c.execCommand('lrymark', '#CCE3FF');
+                mk = c.body.querySelector('mark');
+                ok('lrymark 换色不嵌套', c.body.querySelectorAll('mark').length === 1 &&
+                    mk && /background-color:\s*(?:#cce3ff|rgb\(204,\s*227,\s*255\))/i.test(mk.getAttribute('style') || ''), c.body.innerHTML);
+                eq('lrymark queryCommandValue', String(c.queryCommandValue('lrymark')).toLowerCase().indexOf('#cce3ff') !== -1 ? 'y' : 'n', 'y');
+                // 部分清除
+                rng = c.selection.getRange();
+                rng.setStart(mk.firstChild, 0).setEnd(mk.firstChild, 2).select();
+                c.execCommand('lrymark', 'clear');
+                ok('lrymark 部分清除（剩余高亮无损）', c.body.querySelectorAll('mark').length === 1 &&
+                    c.body.querySelector('mark').textContent === '高亮', c.body.innerHTML);
+                // 全部清除
+                rng = c.selection.getRange();
+                rng.selectNodeContents(c.body.querySelector('p')).select();
+                c.execCommand('lrymark', 'clear');
+                ok('lrymark 清除（无空壳）', c.body.querySelectorAll('mark').length === 0, c.body.innerHTML);
+                // 存盘输出
+                c.setContent('<p>a <mark>b</mark> c</p>');
+                ok('mark 存盘往返', c.getContent().indexOf('<mark>b</mark>') !== -1, c.getContent());
+                // 工具栏按钮注册
+                ok('lrymark 工具栏按钮', !!document.querySelector('.edui-for-lrymark'));
+                // 高亮色板表
+                ok('UE.mdHighlightColors 色板', Array.isArray(UE.mdHighlightColors) && UE.mdHighlightColors.length >= 6);
+                ok('UE.mdCardTypes 类型表', UE.mdCardTypes.order.join(',') === 'info,success,warning,danger');
 
                 /* ---------- 编辑器全链路（编辑器 B） ---------- */
                 b.setContent('<h2>标题</h2><p style="text-align:center">居中 <span style="color:#ff0000">红字</span> x<sup>2</sup></p><pre class="brush:js;toolbar:false;theme:monokai;">let a = 1;</pre>');

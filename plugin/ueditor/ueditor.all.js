@@ -31884,7 +31884,7 @@ UE.mdBrushInfo = function (cls) {
 };
 
 /* 裸域名链接补协议：Markdown 里 [x](cdn.example.com/path) 这类无协议目标，showdown 原样
-   输出 href="cdn.example.com/path"，浏览器按相对路径解析致链接失效，论坛 handle_url 外链
+   输出 href="oss.lrybk.com/path"，浏览器按相对路径解析致链接失效，论坛 handle_url 外链
    跳转又只认 http/https。这里统一补 https://。仅认“域名样”目标：host.tld 带路径/查询/锚点，
    或无路径但带 www. 前缀 / 常见 TLD；不动相对路径(/、./、#、?)、协议相对(//)、已带协议、mailto/tel 等。 */
 UE.mdNormalizeBareUrl = (function () {
@@ -31935,7 +31935,7 @@ UE.postprocessMarkdownHtml = function (html) {
         }
         return /checked/i.test(input) ? "\u2611" : "\u2610";
     });
-    // 裸域名链接补 https://（[x](cdn.example.com/path) → href="https://cdn.example.com/path"）
+    // 裸域名链接补 https://（[x](cdn.example.com/path) → href="https://oss.lrybk.com/path"）
     html = html.replace(/<a\s[^>]*>/gi, function (tag) {
         return tag.replace(/(\s)href\s*=\s*(?:"([^"]*)"|'([^']*)')/i, function (attr, sp, dq, sq) {
             var href = dq !== undefined ? dq : sq;
@@ -32213,6 +32213,42 @@ UE.mdAlertTypes = {
     }
 };
 
+/* 语雀高亮块（2026-11 语雀语法对齐）：:::info / :::success / :::warning / :::danger 容器，
+   亦认 GitHub 提示块类型与中文别名（note→info、tip→success、important→warning、caution→danger）。
+   呈现为 lry-card 彩色卡片（区别于 GitHub 式 lry-alert 左边条），导出还原为 ::: 容器语法。
+   alias 查找顺序：原样 → 大写 → 小写（info/INFO/Info 均可）。 */
+UE.mdCardTypes = {
+    order: ["info", "success", "warning", "danger"],
+    label: { info: "信息", success: "成功", warning: "警示", danger: "危险" },
+    color: { info: "#0969DA", success: "#1A7F37", warning: "#BF8700", danger: "#CF222E" },
+    bg: { info: "#F1F8FF", success: "#F0FFF4", warning: "#FFF8E5", danger: "#FFF5F5" },
+    alias: {
+        info: "info", INFO: "info",
+        success: "success", SUCCESS: "success",
+        warning: "warning", WARNING: "warning",
+        danger: "danger", DANGER: "danger",
+        note: "info", NOTE: "info",
+        tip: "success", TIP: "success",
+        important: "warning", IMPORTANT: "warning",
+        caution: "danger", CAUTION: "danger",
+        "信息": "info", "成功": "success", "警告": "warning", "危险": "danger",
+        "提示": "info", "技巧": "success", "重要": "warning", "注意": "danger"
+    }
+};
+
+/* 语雀风格行内高亮色板：value 为空串 = 默认黄（导出 ==高亮== 标记，无内联样式）；
+   彩色高亮存 <mark style="background-color:…">，导出保留为内联 HTML，往返无损。
+   color 仅用于界面色块展示。 */
+UE.mdHighlightColors = [
+    { label: "默认黄", value: "", color: "#FFF3A3" },
+    { label: "红色", value: "#FFD6D6", color: "#FFD6D6" },
+    { label: "橙色", value: "#FFE3C2", color: "#FFE3C2" },
+    { label: "绿色", value: "#C8F2D2", color: "#C8F2D2" },
+    { label: "蓝色", value: "#CCE3FF", color: "#CCE3FF" },
+    { label: "紫色", value: "#E7DAFF", color: "#E7DAFF" },
+    { label: "青色", value: "#C4F1EE", color: "#C4F1EE" }
+];
+
 /* emoji 短码（GitHub 常用子集）：:smile: → 😄；字符本身导出时原样保留，往返无损 */
 UE.mdEmoji = {
     smile: "\ud83d\ude04", smiley: "\ud83d\ude03", grin: "\ud83d\ude01", laughing: "\ud83d\ude06",
@@ -32266,11 +32302,12 @@ UE.mdEmoji = {
    1. 围栏代码块 ``` / ~~~：自研解析（showdown 遇到带参数的 info string 会解析失败），
       支持 ```js theme=monokai；```math 视为公式块
    2. <div style="…" markdown="1">…</div>：内部递归按 Markdown 转换，样式合并回顶层块
-   3. 提示块 > [!NOTE] / [!TIP] / [!IMPORTANT] / [!WARNING] / [!CAUTION]（亦认 提示/技巧/重要/警告/注意）
-   4. 脚注定义 [^x]: …（引用 [^x] 保留标签文本，不重编号，往返无损）；[TOC] 目录行
-   5. 公式 $$…$$ / \[…\]（独占行）/ $…$ / \(…\)：转换前抽出，防止 _ * 被当作 Markdown
-   6. ==高亮==、:emoji: 短码、转义 \$ \= \:
-   5、6 步期间行内代码 / HTML 标签 / 链接地址 / 裸 URL 受保护，不会被误改。
+   3. 语雀高亮块 :::info / :::success / :::warning / :::danger（亦认 GitHub 类型与中文别名）
+   4. 提示块 > [!NOTE] / [!TIP] / [!IMPORTANT] / [!WARNING] / [!CAUTION]（亦认 提示/技巧/重要/警告/注意）
+   5. 脚注定义 [^x]: …（引用 [^x] 保留标签文本，不重编号，往返无损）；[TOC] 目录行
+   6. 公式 $$…$$ / \[…\]（独占行）/ $…$ / \(…\)：转换前抽出，防止 _ * 被当作 Markdown
+   7. ==高亮==、:emoji: 短码、转义 \$ \= \:
+   第 6、7 步期间行内代码 / HTML 标签 / 链接地址 / 裸 URL 受保护，不会被误改。
    递归（对齐块、提示块内部）共用同一份占位符仓库，最外层统一还原。 */
 UE._mdPipeline = (function () {
     var MAX_DEPTH = 6;
@@ -32394,6 +32431,51 @@ UE._mdPipeline = (function () {
                 }
                 return lead + hold(state, html, true, indent);
             });
+    }
+
+    /* ---- 2.5 语雀高亮块 :::info / :::success / :::warning / :::danger ---- */
+    function extractCards(md, state, convertInner) {
+        var lines = md.split("\n");
+        var out = [];
+        for (var i = 0; i < lines.length; i++) {
+            var m = lines[i].match(/^([ \t]{0,3})(:{3,})[ \t]*([A-Za-z\u4e00-\u9fa5]{0,20})[ \t]*$/);
+            if (!m) {
+                out.push(lines[i]);
+                continue;
+            }
+            var type = m[3] ? (UE.mdCardTypes.alias[m[3]] || UE.mdCardTypes.alias[m[3].toUpperCase()] ||
+                UE.mdCardTypes.alias[m[3].toLowerCase()]) : "info";
+            if (!type) {
+                // 未知类型：整段原样保留（连同闭合行一起，避免闭合 ::: 被误当新卡片开头）
+                var kEnd = i + 1;
+                for (; kEnd < lines.length; kEnd++) {
+                    if (/^[ \t]{0,3}:{3,}[ \t]*$/.test(lines[kEnd])) {
+                        break;
+                    }
+                }
+                for (var k = i; k <= kEnd && k < lines.length; k++) {
+                    out.push(lines[k]);
+                }
+                i = kEnd;
+                continue;
+            }
+            var fence = m[2];
+            var body = [];
+            var j = i + 1;
+            for (; j < lines.length; j++) {
+                var cm = lines[j].match(/^[ \t]{0,3}(:{3,})[ \t]*$/);
+                if (cm && cm[1].length >= fence.length) {
+                    break;
+                }
+                body.push(lines[j]);
+            }
+            // 未闭合容器延续到文末（j 越界时整段消费完）
+            i = j;
+            var inner = convertInner(body.join("\n"));
+            out.push(hold(state, '<blockquote class="lry-card lry-card-' + type + '">' +
+                (inner || "<p><br/></p>") + "</blockquote>", true, m[1]));
+        }
+        return out.join("\n");
     }
 
     /* ---- 3. 提示块 ---- */
@@ -32702,6 +32784,7 @@ UE._mdPipeline = (function () {
         }
         md = extractFences(md, state);
         md = extractMdDivs(md, state, convertInner);
+        md = extractCards(md, state, convertInner);
         md = extractAlerts(md, state, convertInner);
         md = extractFootnoteDefs(md, state);
         md = extractToc(md, state);
@@ -32858,6 +32941,7 @@ UE.markdownNeedsEscaping = function (md) {
     if (/==[^=\s][^=\n]*==/.test(md)) { return true; }
     if (/\$\$[\s\S]+?\$\$|\$[^$\s][^$\n]*\$|\\\([\s\S]+?\\\)/.test(md)) { return true; }
     if (/\[\^[^\]\s]+\]|^\s*\[TOC\]\s*$/im.test(md)) { return true; }
+    if (/^:::|^[ \t]{0,3}:::/m.test(md)) { return true; }
     return false;
 };
 
@@ -33059,7 +33143,22 @@ UE.htmlToMarkdown = (function () {
             case "kbd":
                 return "<kbd>" + inner() + "</kbd>";
             case "mark":
-                return "<mark>" + inner() + "</mark>";
+                /* 语雀式高亮导出（2026-11）：
+                   - 无底色 → ==高亮== 标记（干净 Markdown，往返还原为 <mark>）
+                   - 带底色 → 保留 <mark style="background-color:…"> 内联 HTML（保真往返）
+                   - 核心内容首尾含 =、跨行（含 <br> 哨兵）或为空 → 回退无样式 mark HTML 保往返 */
+                var mkInner = inner();
+                var mkSt = parseStyle(node);
+                var mkBg = mkSt["background-color"] || mkSt["background"] || "";
+                var mkCss = mkBg ? UE.sanitizeCssStyle("background-color:" + mkBg) : "";
+                if (mkCss && ctx.rich) {
+                    return "<mark " + htmlAttr("style", mkCss) + ">" + mkInner + "</mark>";
+                }
+                var mkCore = mkInner.replace(/^[ \t\n]+|[ \t\n]+$/g, "");
+                if (mkCore && !/[=\n\u0001]/.test(mkCore)) {
+                    return wrapInline(mkInner, "==");
+                }
+                return "<mark>" + mkInner + "</mark>";
             case "q":
                 return '"' + inner() + '"';
             case "a":
@@ -33528,6 +33627,12 @@ UE.htmlToMarkdown = (function () {
                 }
                 return paraToMd(node, ctx);
             case "blockquote":
+                // 语雀高亮块：lry-card-xxx → :::xxx 容器（内部内容不加 > 前缀）
+                var cardM = cls.match(/\blry-card-([a-z]+)/);
+                if (cardM && UE.mdCardTypes.alias[cardM[1]]) {
+                    var cardBody = blocksToMd(node, "", ctx).replace(/\n+$/, "");
+                    return ":::" + UE.mdCardTypes.alias[cardM[1]] + "\n" + cardBody + "\n:::\n\n";
+                }
                 // 提示块：class 命中取捕获组，否则取 data-alert 字符串（不能对字符串用 am[1]）
                 var am = cls.match(/\blry-alert-([a-z]+)/);
                 var atype = (am ? am[1] : (node.getAttribute("data-alert") || "")).toUpperCase();
@@ -33665,6 +33770,138 @@ UE.htmlToMarkdown = (function () {
 })();
 
 
+
+/* 语雀风格行内高亮命令（lrymark，2026-11）：
+   execCommand("lrymark", value)：
+     - ""            套默认黄 → <mark>（无 style，Markdown 往返 ==高亮==）
+     - "#RRGGBB"     套彩色 → <mark style="background-color:…">（导出保留内联 HTML）
+     - "default"/"clear" 清除选中区高亮（跨段部分选中亦正确拆解）
+   选区整体处于同色高亮内时再次执行同色 = 取消（语雀式切换）；
+   换色执行会先剥掉旧 mark 再套新色，不产生嵌套 mark。 */
+UE.plugins["lry-mark"] = function () {
+    var me = this;
+    var domUtils = UE.dom.domUtils;
+
+    function markOf(node) {
+        var el = node && node.nodeType === 1 ? node : (node && node.parentNode);
+        while (el && el !== me.body && el.nodeType === 1) {
+            if (el.tagName && el.tagName.toLowerCase() === "mark") {
+                return el;
+            }
+            el = el.parentNode;
+        }
+        return null;
+    }
+
+    /* 颜色归一化：浏览器会把 #FFD6D6 序列化成 rgb(255,214,214)，比较前统一为 #rrggbb */
+    function normColor(c) {
+        c = String(c || "").toLowerCase().replace(/\s+/g, "");
+        var m3 = c.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/);
+        if (m3) {
+            return "#" + m3[1] + m3[1] + m3[2] + m3[2] + m3[3] + m3[3];
+        }
+        var m6 = c.match(/^#[0-9a-f]{6}$/);
+        if (m6) {
+            return c;
+        }
+        var m = c.match(/^rgba?\((\d+),(\d+),(\d+)(?:,[\d.]+)?\)$/);
+        if (m) {
+            var h = function (x) {
+                var s = parseInt(x, 10).toString(16);
+                return s.length < 2 ? "0" + s : s;
+            };
+            return "#" + h(m[1]) + h(m[2]) + h(m[3]);
+        }
+        return c;
+    }
+
+    function bgOf(mark) {
+        if (!mark) {
+            return "";
+        }
+        var st = UE.sanitizeCssStyle(mark.getAttribute("style") || "");
+        var m = st.match(/background-color:\s*([^;]+)/i);
+        return m ? normColor(m[1]) : "";
+    }
+
+    /* removeInlineStyle 在选区与 mark 边界重合时会拆出空 <mark></mark> 壳，统一清扫 */
+    function sweepEmptyMarks() {
+        var marks = me.body.getElementsByTagName("mark");
+        for (var i = marks.length - 1; i >= 0; i--) {
+            var m = marks[i];
+            var hasContent = false;
+            for (var c = m.firstChild; c; c = c.nextSibling) {
+                if (c.nodeType === 1) {
+                    hasContent = true;
+                    break;
+                }
+                if (c.nodeType === 3 && c.nodeValue.replace(/[\s\u200b\xa0]/g, "")) {
+                    hasContent = true;
+                    break;
+                }
+            }
+            if (!hasContent) {
+                domUtils.remove(m);
+            }
+        }
+    }
+
+    me.commands["lrymark"] = {
+        execCommand: function (cmd, val) {
+            var color = String(val == null ? "" : val).trim().toLowerCase();
+            var range = me.selection.getRange();
+            if (color === "default" || color === "clear" || color === "none") {
+                range.removeInlineStyle(["mark"]);
+                sweepEmptyMarks();
+                return true;
+            }
+            var startM = markOf(range.startContainer);
+            var endM = markOf(range.endContainer);
+            if (startM && startM === endM) {
+                if (bgOf(startM) === normColor(color)) {
+                    // 同色再点 → 取消该高亮（整段解开，子节点原位保留，选区零扰动）
+                    var frag = me.document.createDocumentFragment();
+                    while (startM.firstChild) {
+                        frag.appendChild(startM.firstChild);
+                    }
+                    if (frag.firstChild) {
+                        startM.parentNode.replaceChild(frag, startM);
+                    } else {
+                        startM.parentNode.removeChild(startM);
+                    }
+                } else {
+                    // 选区在同一 mark 内：直接换色（改 style 即可，不拆 DOM）
+                    if (color) {
+                        startM.setAttribute("style", "background-color:" + color);
+                    } else {
+                        startM.removeAttribute("style");
+                    }
+                }
+                return true;
+            }
+            // 跨 mark / 裸文本混合选区：先剥旧 mark，再整体套色；
+            // 空壳清扫必须放在 apply 之后——removeInlineStyle 的选区书签锚点
+            // 可能落在空壳里，先清扫会把选区拆坍缩，导致套色不生效
+            if (startM || endM) {
+                range.removeInlineStyle(["mark"]);
+            }
+            me.selection.getRange().applyInlineStyle("mark", color ? { style: "background-color:" + color } : {});
+            sweepEmptyMarks();
+            return true;
+        },
+        queryCommandState: function () {
+            if (this.highlight || !this.body) {
+                return -1;
+            }
+            return 0;
+        },
+        queryCommandValue: function () {
+            var m = markOf(this.selection.getStart());
+            var bg = bgOf(m);
+            return bg || (m ? "default" : "");
+        }
+    };
+};
 
 UE.plugins["markdown-paste"] = function () {
     var me = this;
@@ -34166,6 +34403,13 @@ UE.plugins["markdown-mode"] = function () {
         taInsert(cleaned, sel.s, sel.e);
     }
 
+    /* 剥掉文本中的高亮标记（==…== 与 <mark> 标签），lrymark 清除用 */
+    function stripMarksMd(text) {
+        return String(text)
+            .replace(/==([^=\n]+)==/g, "$1")
+            .replace(/<\/?mark\b[^>]*>/gi, "");
+    }
+
     /* 链接 */
     function linkSrc(value) {
         var sel = taSel();
@@ -34291,6 +34535,22 @@ UE.plugins["markdown-mode"] = function () {
                 return null;
             case "backcolor":
                 wrapSelCmd('<span style="background-color:' + (value || "#ff0") + '">', "</span>", "背景色");
+                return null;
+            case "lrymark":
+                // 语雀式高亮：空值 = ==…==（默认黄）；色值 = <mark style>；default = 清除
+                if (value === "default" || value === "clear") {
+                    var mkSel = taSel();
+                    if (mkSel.s === mkSel.e) {
+                        var mb = blockBounds(ta.value, mkSel.s, mkSel.e);
+                        mkSel = { s: mb.bs, e: mb.be };
+                    }
+                    taInsert(stripMarksMd(ta.value.substring(mkSel.s, mkSel.e)), mkSel.s, mkSel.e);
+                    showStatusTip("已清除高亮");
+                } else if (value) {
+                    wrapSelCmd('<mark style="background-color:' + value + '">', "</mark>", "高亮");
+                } else {
+                    wrapSelCmd("==", "==", "高亮");
+                }
                 return null;
             case "fontfamily":
                 wrapSelCmd('<span style="font-family:' + (value || "inherit") + '">', "</span>", "字体");
@@ -36268,6 +36528,7 @@ UE.plugins["slash-menu"] = function () {
             { g: "块", label: "表格", kw: "bg biaoge table", type: "sub", sub: "table" },
             { g: "块", label: "分割线", kw: "fgx hr fenge", type: "block", md: "---", rich: ["horizontal"] },
             { g: "块", label: "提示块", kw: "tishi note alert", type: "sub", sub: "alert" },
+            { g: "块", label: "高亮块", kw: "glk card highlightblock gaoliangkuai", type: "sub", sub: "card" },
             { g: "块", label: "目录", kw: "ml mulu toc", type: "block", md: "[TOC]", rich: null },
 
             { g: "行内", label: "粗体", kw: "ct bold cu", type: "line", md: ["**", "**"], rich: ["bold"] },
@@ -36275,7 +36536,7 @@ UE.plugins["slash-menu"] = function () {
             { g: "行内", label: "删除线", kw: "scx strikethrough shanchu", type: "line", md: ["~~", "~~"], rich: ["strikethrough"] },
             { g: "行内", label: "下划线", kw: "xhx underline xiahuaxian", type: "line", md: ["<u>", "</u>"], rich: ["underline"] },
             { g: "行内", label: "行内代码", kw: "code dm inline", type: "line", md: ["`", "`"], rich: ["inserthtml", "code"] },
-            { g: "行内", label: "高亮", kw: "gl highlight", type: "line", md: ["==", "=="], rich: ["inserthtml", "mark"] },
+            { g: "行内", label: "高亮", kw: "gl highlight gaoliang", type: "sub", sub: "mark" },
             { g: "行内", label: "上标", kw: "sb superscript shangbiao", type: "line", md: ["<sup>", "</sup>"], rich: ["superscript"] },
             { g: "行内", label: "下标", kw: "xb subscript xiabiao", type: "line", md: ["<sub>", "</sub>"], rich: ["subscript"] },
             { g: "行内", label: "行内公式", kw: "gs math gongshi", type: "action", act: "math-inline" },
@@ -36618,6 +36879,45 @@ UE.plugins["slash-menu"] = function () {
                     var cls = "lry-alert lry-alert-" + it.md.match(/\[!(\w+)\]/)[1].toLowerCase();
                     me.execCommand("inserthtml", '<blockquote class="' + cls + '"><p><br/></p></blockquote>');
                 }
+            };
+        } else if (kind === "card") {
+            // 语雀高亮块：:::info / :::success / :::warning / :::danger
+            UE.mdCardTypes.order.forEach(function (t) {
+                items.push({
+                    label: UE.mdCardTypes.label[t] + " (:::" + t + ")",
+                    hint: ":::" + t,
+                    cardType: t,
+                    swatch: UE.mdCardTypes.bg[t],
+                    borderColor: UE.mdCardTypes.color[t],
+                    type: "block"
+                });
+            });
+            applyFn = function (it) {
+                if (me.__mdSrc) {
+                    me.__mdSrc.insertBlock(":::" + it.cardType + "\n\n:::");
+                    me.__mdSrc.ta.dispatchEvent(new Event("input", { bubbles: true }));
+                } else {
+                    me.execCommand("inserthtml",
+                        '<blockquote class="lry-card lry-card-' + it.cardType + '"><p><br/></p></blockquote>');
+                }
+            };
+        } else if (kind === "mark") {
+            // 语雀式行内高亮色板：默认黄 = ==…==；彩色 = <mark style>；另附清除
+            UE.mdHighlightColors.forEach(function (c) {
+                items.push({
+                    label: c.label,
+                    value: c.value,
+                    swatch: c.color,
+                    type: "line",
+                    md: c.value
+                        ? ['<mark style="background-color:' + c.value + '">', "</mark>"]
+                        : ["==", "=="]
+                });
+            });
+            items.push({ label: "清除高亮", value: "default", type: "action" });
+            applyFn = function (it) {
+                // src 模式下 markdown-mode 会把命令路由到源码栏命令表（lrymark case）
+                me.execCommand("lrymark", it.value);
             };
         } else if (kind === "forecolor" || kind === "backcolor") {
             PALETTE.forEach(function (c) {
@@ -37010,7 +37310,7 @@ UE.plugins["slash-menu"] = function () {
             ["S", "删除线", function (api) { api.exec("strikethrough"); }],
             ["U", "下划线", function (api) { api.exec("underline"); }],
             ["&lt;/&gt;", "行内代码", function (api) { api.wrap("`", "`", "代码"); }],
-            ["▮", "高亮", function (api) { api.wrap("==", "==", "高亮"); }],
+            ["▮", "高亮", function (api) { openMarkSub(); }],
             ["x²", "上标", function (api) { api.exec("superscript"); }],
             ["x₂", "下标", function (api) { api.exec("subscript"); }],
             ["∑", "行内公式", function (api) { api.wrap("$", "$", "公式"); }],
@@ -37051,6 +37351,15 @@ UE.plugins["slash-menu"] = function () {
         }
         var r = bubble.getBoundingClientRect();
         openSub(kind, { left: r.left, top: r.top, bottom: r.bottom });
+    }
+
+    /* 气泡「▮ 高亮」：弹出语雀高亮色板（与斜杠菜单同一份 openSub("mark")） */
+    function openMarkSub() {
+        if (!bubble) {
+            return;
+        }
+        var r = bubble.getBoundingClientRect();
+        openSub("mark", { left: r.left, top: r.top, bottom: r.bottom });
     }
 
     function updateBubble() {
@@ -38035,6 +38344,57 @@ UE.ui = baidu.editor.ui = {};
         html += "</table></div>";
         return html;
     }
+})();
+
+
+// ui/markpicker.js（2026-11 语雀式高亮色板：lrymark 工具栏按钮弹层）
+///import core
+///import uicore
+(function () {
+    var utils = baidu.editor.utils,
+        UIBase = baidu.editor.ui.UIBase;
+
+    var MarkPicker = (baidu.editor.ui.MarkPicker = function (options) {
+        this.initOptions(options);
+        this.initUIBase();
+    });
+    MarkPicker.prototype = {
+        uiName: "markpicker",
+        getHtmlTpl: function () {
+            var colors = (baidu.editor.ui.MarkPicker.palette ||
+                (typeof UE !== "undefined" && UE.mdHighlightColors) ||
+                [{ label: "默认黄", value: "", color: "#FFF3A3" },
+                { label: "红色", value: "#FFD6D6", color: "#FFD6D6" },
+                { label: "蓝色", value: "#CCE3FF", color: "#CCE3FF" }]).slice();
+            var html =
+                '<div id="##" class="edui-markpicker %%" onclick="$$._onClick(event, this);">' +
+                '<div class="edui-markpicker-title">高亮色</div>' +
+                '<div class="edui-markpicker-row">';
+            for (var i = 0; i < colors.length; i++) {
+                html +=
+                    '<a hidefocus title="' + colors[i].label + '" onclick="return false;" href="javascript:"' +
+                    ' unselectable="on" class="edui-box edui-markpicker-cell" data-color="' +
+                    (colors[i].value || "default") + '"' +
+                    ' style="background-color:' + colors[i].color + ';"></a>';
+            }
+            html +=
+                '</div>' +
+                '<div unselectable="on" class="edui-markpicker-clear" data-color="clear">清除高亮</div>' +
+                "</div>";
+            return html;
+        },
+        _onClick: function (evt) {
+            var el = evt.target || evt.srcElement;
+            while (el && el.getAttribute && !el.getAttribute("data-color")) {
+                el = el.parentNode;
+            }
+            var color = el && el.getAttribute && el.getAttribute("data-color");
+            if (color) {
+                this.fireEvent("pickmark", color);
+            }
+        }
+    };
+    utils.inherits(MarkPicker, UIBase);
 })();
 
 
@@ -41010,6 +41370,41 @@ UE.ui = baidu.editor.ui = {};
             };
         })(ci);
     }
+
+    //语雀式高亮（lrymark）：色板弹层 + 主按钮套默认黄（再点同色取消）
+    editorui.lrymark = function (editor) {
+        var MarkPickerUI = editorui.MarkPicker || baidu.editor.ui.MarkPicker;
+        var picker = new MarkPickerUI({
+            editor: editor,
+            onpickmark: function (t, color) {
+                editor.execCommand("lrymark", color === "clear" ? "clear" : color === "default" ? "" : color);
+                popup.hide();
+            }
+        });
+        var popup = new editorui.Popup({
+            editor: editor,
+            content: picker
+        });
+        var ui = new editorui.SplitButton({
+            className: "edui-for-lrymark",
+            title: editor.options.labelMap.lrymark || "高亮",
+            popup: popup,
+            editor: editor,
+            onbuttonclick: function () {
+                // 主按钮：有选区套默认黄（同色再点取消），无选区弹出面板
+                if (editor.selection.getText()) {
+                    editor.execCommand("lrymark", "");
+                } else {
+                    ui.showPopup();
+                }
+            }
+        });
+        editorui.buttons["lrymark"] = ui;
+        editor.addListener("selectionchange", function () {
+            ui.setDisabled(editor.queryCommandState("lrymark") == -1);
+        });
+        return ui;
+    };
 
     var dialogIframeUrlMap = {
         anchor: "~/dialogs/anchor/anchor.html?eb9739cc",

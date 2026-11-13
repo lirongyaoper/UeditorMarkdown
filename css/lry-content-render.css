@@ -134,6 +134,45 @@ blockquote.lry-alert p {
     margin: 0 0 .6em;
 }
 
+/* ---------- 语雀高亮块 :::info / :::success / :::warning / :::danger ---------- */
+blockquote.lry-card {
+    position: relative;
+    margin: 14px 0;
+    padding: 30px 16px 8px 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    border-left-width: 4px;
+}
+
+blockquote.lry-card::before {
+    position: absolute;
+    left: 16px;
+    top: 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+blockquote.lry-card p {
+    margin: 0 0 .6em;
+}
+
+blockquote.lry-card-info {
+    border-color: #B6D9F5; border-left-color: #0969DA; background: #F1F8FF;
+}
+blockquote.lry-card-info::before { content: "\2139\FE0F  信息"; color: #0969DA; }
+blockquote.lry-card-success {
+    border-color: #BCE3C8; border-left-color: #1A7F37; background: #F0FFF4;
+}
+blockquote.lry-card-success::before { content: "\2705  成功"; color: #1A7F37; }
+blockquote.lry-card-warning {
+    border-color: #F0D48A; border-left-color: #BF8700; background: #FFF8E5;
+}
+blockquote.lry-card-warning::before { content: "\26A0\FE0F  警示"; color: #BF8700; }
+blockquote.lry-card-danger {
+    border-color: #F1B8BF; border-left-color: #CF222E; background: #FFF5F5;
+}
+blockquote.lry-card-danger::before { content: "\26D4  危险"; color: #CF222E; }
+
 /* ---------- 目录 ---------- */
 .lry-toc-box {
     margin: 16px 0;

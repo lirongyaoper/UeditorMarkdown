@@ -2547,3 +2547,58 @@ div.edui-box {
     background: #F0F7FF;
     color: #175CD3;
 }
+
+/* ===== 2026-11 语雀式高亮（lrymark）：荧光笔图标 + 色板弹层 ===== */
+/* 字体库无荧光笔字形，用内联 SVG 背景图（笔尖+黄色高亮条） */
+.edui-default .edui-for-lrymark .edui-icon {
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.5 4.5l4 4L9 19H5v-4L15.5 4.5z'/%3E%3Cpath d='M14 6.5l3.5 3.5'/%3E%3C/svg%3E");
+    background-size: 18px 18px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.edui-default .edui-markpicker {
+    padding: 8px 10px;
+    font: 12px/1.6 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    color: #333;
+    user-select: none;
+}
+
+.edui-default .edui-markpicker-title {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 6px;
+}
+
+.edui-default .edui-markpicker-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 166px;
+}
+
+.edui-default .edui-markpicker-cell {
+    display: block;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, .15);
+    cursor: pointer;
+}
+
+.edui-default .edui-markpicker-cell:hover {
+    border-color: #4A90D9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, .25);
+}
+
+.edui-default .edui-markpicker-clear {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #E5E7EB;
+    cursor: pointer;
+    color: #555;
+}
+
+.edui-default .edui-markpicker-clear:hover {
+    color: #CF222E;
+}
